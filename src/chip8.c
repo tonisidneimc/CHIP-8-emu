@@ -427,6 +427,7 @@ static void OP_Dxyn(){
 			}
 		}
 	}
+	drawF = 1;
 }
 
 static void OP_Ex9E(){
@@ -581,7 +582,7 @@ void cycle(){
 	}
 	if(emu.soundTimer > 0){
 		if(emu.soundTimer == 1){
-			printf("BEEEP!\n");
+			system("echo -e '\a'");
 		}
 		--emu.soundTimer;
 	}

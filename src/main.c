@@ -1,8 +1,16 @@
-#include <GL/glut.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include "chip8.h"
+
+#ifdef _WIN32
+    #include "libs/glut.h"
+    #include <windows.h>
+#elif __APPLE__
+    #include <GLUT/glut.h>
+#elif __unix__      
+    #include <GL/glut.h>
+#endif
 
 GLfloat scale = 10;
 int cycleDelay;
@@ -10,14 +18,16 @@ int cycleDelay;
 uint8_t* keypad;
 uint32_t* video;
 
+uint8_t	scrBuffer[VIDEO_HEIGHT][VIDEO_WIDTH][3] = {0x00};
+
 void initGL(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glShadeModel(GL_FLAT);
+	glDisable(GL_DEPTH_TEST);
 }
 
 void update(){
-	//update and reshape
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_TEST);	
+	//reshape and update texture
+	glClear(GL_COLOR_BUFFER_BIT);	
 	
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -29,7 +39,7 @@ void update(){
 	gluOrtho2D(0, VIDEO_WIDTH * scale, VIDEO_HEIGHT * scale, 0);
 	
 	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();	
+	glLoadIdentity();
 	
 	glEnableClientState(GL_VERTEX_ARRAY);	
 	
@@ -63,12 +73,15 @@ void display(){
 		previousTime = currentTime;
 				
 		cycle();
-	
-		update();		
-		
-		glFlush();
-		glutSwapBuffers();
-	}
+
+		if(drawF){
+			update();		
+			glFlush();
+				
+			glutSwapBuffers();
+			drawF = 0;
+		}
+	}	
 }
 
 void keyDown(GLubyte key, GLint x, GLint y);

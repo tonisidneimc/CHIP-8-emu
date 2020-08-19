@@ -73,5 +73,6 @@ void cycle();
 
 uint8_t* keypd();
 uint32_t* gfx();
+int drawF;
 
 #endif
