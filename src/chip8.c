@@ -6,7 +6,7 @@
 
 #define START_ADDRESS 0x200
 #define FONTSET_START_ADDRESS 0x50
-#define WORD_SZ (sizeof(uint8_t))
+#define WORD_SZ (sizeof(memory[0]))
 #define FONTSET_SZ 80
 
 CHIP8 emu = {
@@ -388,7 +388,7 @@ static void OP_Cxkk(){
 
 static void OP_Dxyn(){
 	//DRW Vx, Vy, height : Draw a sprite at position VX, VY with N bytes of sprite data starting at the address stored in I
-	//each sprite drawing has a variable height, and a width of 8 bits
+	//each sprite drawing has a given height, and a fixed width of 8 bits
 	
 	//get operands
 	uint8_t Vx = (opcode & 0x0F00u) >> 8u;
@@ -408,10 +408,11 @@ static void OP_Dxyn(){
 			//select each bit of the sprite
 			uint8_t spritePixel = sprite & (0x80u >> col);
 			
-			if((yScreen + row) * VIDEO_WIDTH + (xScreen + col) > 2047) continue;
+			int pixelIndex = (yScreen + row) * VIDEO_WIDTH + (xScreen + col);
+			if(pixelIndex > 2047) continue; //out of video memory
 				
 			//do a conversion from Screen coordinates(2D) to memory array(1D)				
-			uint32_t* displayPixel = &(emu.video[(yScreen + row) * VIDEO_WIDTH + (xScreen + col)]);
+			uint32_t* displayPixel = &(emu.video[pixelIndex]);
 			
 			//pixel is on
 			if(spritePixel){

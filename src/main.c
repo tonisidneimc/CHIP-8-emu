@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+//#include <time.h>
 #include "chip8.h"
 
 #ifdef _WIN32
@@ -13,7 +13,7 @@
 #endif
 
 GLfloat scale = 10;
-int cycleDelay;
+int cycleDelay = 17; //~ 1000.0/60.0
 
 uint8_t* keypad;
 uint32_t* video;
@@ -63,45 +63,53 @@ void update(){
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-clock_t previousTime; //last cycle time
-clock_t currentTime;
-
 void display(){
-	currentTime = clock();
-	
-	if(currentTime - previousTime > cycleDelay){
-		previousTime = currentTime;
-				
-		cycle();
+	cycle();
 
-		if(drawF){
-			update();		
-			glFlush();
+	if(drawF){
+		update();		
+		glFlush();
 				
-			glutSwapBuffers();
-			drawF = 0;
-		}
+		glutSwapBuffers();
+		drawF = 0;
 	}	
+}
+
+void timer(int t){
+	glutPostRedisplay();
+	glutTimerFunc(cycleDelay, timer, 0);
 }
 
 void keyDown(GLubyte key, GLint x, GLint y);
 void keyUp(GLubyte key, GLint x, GLint y);
 
 int main(int argc, char* argv[]){
-	if(argc != 4){
-		fprintf(stderr, "Usage: %s <scale> <delay> <ROM>\n", argv[0]);
+	const char* romFile;
+	
+	if(argc < 2 || argc > 4){
+		fprintf(stderr, "Usage: make run [scale] [delay] [ROM]\n");
 		exit(EXIT_FAILURE);
+	}
+	if(argc == 3){
+		//use default scale value
+		cycleDelay = atoi(argv[1]);
+		romFile = argv[2];
 	}		
-	scale = atoi(argv[1]);
-	cycleDelay = atoi(argv[2]);	
-
-	const char* romFile = argv[3];
+	else if(argc == 4){
+		scale = atoi(argv[1]);
+		cycleDelay = atoi(argv[2]);
+		romFile = argv[3];	
+	}else{
+		//use default values for scale and cycleDelay
+		romFile = argv[1];
+	} 
+	
 	initPlatform();
 	loadROM(romFile);	
 	
 	glutInit(&argc, argv);
 	
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(VIDEO_WIDTH * scale, VIDEO_HEIGHT * scale);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("CHIP8 Emulator");		
@@ -117,7 +125,7 @@ int main(int argc, char* argv[]){
 	glutKeyboardFunc(keyDown);
 	glutKeyboardUpFunc(keyUp);	
 	
-	previousTime = clock();
+	glutTimerFunc(cycleDelay, timer, 0);
 	glutMainLoop();
 	
 	return 0;
@@ -125,7 +133,7 @@ int main(int argc, char* argv[]){
 
 void keyDown(GLubyte key, GLint x, GLint y){
 	
-	if(key == 27) exit(0); //ESC
+	if(key == 27) exit(EXIT_SUCCESS); //ESC
 
 	switch(key){
 		case '1':
